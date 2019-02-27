@@ -136,6 +136,16 @@ static float progress = 0.0f;
     self.activityCount++;
 }
 
+- (IBAction)showWithAnimate {
+    NSMutableArray *images = [NSMutableArray arrayWithCapacity:61];
+    for (NSInteger i = 0; i < 61; i++) {
+        NSString *imagePath = [[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"loading%ld@3x", i] ofType:@"png"];
+        [images addObject:[UIImage imageWithContentsOfFile:imagePath]];
+    }
+    
+    [SVProgressHUD showAnimatedImages:images status:@"加载中..."];
+}
+
 
 #pragma mark - Styling
 

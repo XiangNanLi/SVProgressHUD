@@ -436,7 +436,7 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
 
 - (void)updateHUDFrame {
     // Check if an image or progress ring is displayed
-    BOOL imageUsed = (self.imageView.image) && !(self.imageView.hidden);
+    BOOL imageUsed = (self.imageView.image || self.imageView.animationImages) && !(self.imageView.hidden);
     BOOL progressUsed = self.imageView.hidden;
     
     // Calculate size of string
@@ -844,9 +844,104 @@ static const CGFloat SVProgressHUDLabelSpacing = 8.0f;
                 if (image.renderingMode != UIImageRenderingModeAlwaysTemplate) {
                     strongSelf.imageView.image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
                 }
-                strongSelf.imageView.tintColor = strongSelf.foregroundColorForStyle;
+                strongSelf.imageView.tintColor = strongSelf.foregroundColorForStyle;;
             } else {
                 strongSelf.imageView.image = image;
+            }
+            strongSelf.imageView.hidden = NO;
+            
+            // Update text
+            strongSelf.statusLabel.hidden = status.length == 0;
+            strongSelf.statusLabel.text = status;
+            
+            // Fade in delayed if a grace time is set
+            // An image will be dismissed automatically. Thus pass the duration as userInfo.
+            if (self.graceTimeInterval > 0.0 && self.backgroundView.alpha == 0.0f) {
+                strongSelf.graceTimer = [NSTimer timerWithTimeInterval:self.graceTimeInterval target:strongSelf selector:@selector(fadeIn:) userInfo:@(duration) repeats:NO];
+                [[NSRunLoop mainRunLoop] addTimer:strongSelf.graceTimer forMode:NSRunLoopCommonModes];
+            } else {
+                [strongSelf fadeIn:@(duration)];
+            }
+        }
+    }];
+}
+
++ (void)showAnimatedImages:(nonnull NSArray *)animatedImages status:(nullable NSString*)status {
+    [[self sharedView] showAnimatedImages:animatedImages status:status];
+}
+
++ (void)showAnimatedImages:(nonnull NSArray *)animatedImages status:(nullable NSString*)status duration:(NSTimeInterval)duration {
+    [[self sharedView] showAnimatedImages:animatedImages status:status duration:duration];
+}
+
+
+- (void)showAnimatedImages:(NSArray *)animatedImages status:(NSString*)status {
+    __weak SVProgressHUD *weakSelf = self;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        __strong SVProgressHUD *strongSelf = weakSelf;
+        if(strongSelf){
+            if(strongSelf.fadeOutTimer) {
+                strongSelf.activityCount = 0;
+            }
+            
+            // Stop timer
+            strongSelf.fadeOutTimer = nil;
+            strongSelf.graceTimer = nil;
+            
+            // Update / Check view hierarchy to ensure the HUD is visible
+            [strongSelf updateViewHierarchy];
+            
+            // Update imageView
+            if (animatedImages) {
+                strongSelf.imageView.animationImages = animatedImages;
+                strongSelf.imageView.animationDuration = 2.f;
+                [strongSelf.imageView startAnimating];
+            }
+            if (self.shouldTintImages) {
+                strongSelf.imageView.tintColor = strongSelf.foregroundColorForStyle;;
+            }
+            strongSelf.imageView.hidden = NO;
+            
+            // Update text and set progress to the given value
+            strongSelf.statusLabel.hidden = status.length == 0;
+            strongSelf.statusLabel.text = status;
+            
+            // Fade in delayed if a grace time is set
+            if (self.graceTimeInterval > 0.0 && self.backgroundView.alpha == 0.0f) {
+                strongSelf.graceTimer = [NSTimer timerWithTimeInterval:self.graceTimeInterval target:strongSelf selector:@selector(fadeIn:) userInfo:nil repeats:NO];
+                [[NSRunLoop mainRunLoop] addTimer:strongSelf.graceTimer forMode:NSRunLoopCommonModes];
+            } else {
+                [strongSelf fadeIn:nil];
+            }
+        }
+    }];
+}
+
+- (void)showAnimatedImages:(NSArray *)animatedImages status:(NSString*)status duration:(NSTimeInterval)duration {
+    __weak SVProgressHUD *weakSelf = self;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        __strong SVProgressHUD *strongSelf = weakSelf;
+        if(strongSelf){
+            // Stop timer
+            strongSelf.fadeOutTimer = nil;
+            strongSelf.graceTimer = nil;
+            
+            // Update / Check view hierarchy to ensure the HUD is visible
+            [strongSelf updateViewHierarchy];
+            
+            // Reset progress and cancel any running animation
+            strongSelf.progress = SVProgressHUDUndefinedProgress;
+            [strongSelf cancelRingLayerAnimation];
+            [strongSelf cancelIndefiniteAnimatedViewAnimation];
+            
+            // Update imageView
+            if (animatedImages) {
+                strongSelf.imageView.animationImages = animatedImages;
+                strongSelf.imageView.animationDuration = 2.f;
+                [strongSelf.imageView startAnimating];
+            }
+            if (self.shouldTintImages) {
+                strongSelf.imageView.tintColor = strongSelf.foregroundColorForStyle;;
             }
             strongSelf.imageView.hidden = NO;
             

@@ -143,5 +143,9 @@ typedef void (^SVProgressHUDDismissCompletion)(void);
 
 + (NSTimeInterval)displayDurationForString:(nullable NSString*)string;
 
++ (SVProgressHUD* _Nonnull)sharedView ;
++ (void)showAnimatedImages:(nonnull NSArray *)animatedImages status:(nullable NSString*)status duration:(NSTimeInterval)duration ;
++ (void)showAnimatedImages:(nonnull NSArray *)animatedImages status:(nullable NSString*)status ;
+
 @end
 

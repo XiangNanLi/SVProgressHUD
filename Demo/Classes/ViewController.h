@@ -17,6 +17,7 @@
 - (IBAction)showInfoWithStatus;
 - (IBAction)showSuccessWithStatus;
 - (IBAction)showErrorWithStatus;
+- (IBAction)showWithAnimate;
 
 - (IBAction)changeStyle:(id)sender;
 - (IBAction)changeAnimationType:(id)sender;
